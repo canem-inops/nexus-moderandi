@@ -16,6 +16,7 @@ class NexusCallScreeningService : CallScreeningService() {
 
     @Inject lateinit var allowListRepository: AllowListRepository
     @Inject lateinit var rejectedCallRepository: RejectedCallRepository
+    @Inject lateinit var callScreener: CallScreener
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -54,16 +55,7 @@ class NexusCallScreeningService : CallScreeningService() {
             return true
         }
 
-        val normalizedIncoming = normalizeNumber(phoneNumber)
         val allAllowed = allowListRepository.getAllNumbersSync()
-        return allAllowed.any { normalizeNumber(it.phoneNumber) == normalizedIncoming }
-    }
-
-    private fun normalizeNumber(number: String): String {
-        return if (number.startsWith("+")) {
-            "+" + number.filter { it.isDigit() }
-        } else {
-            number.filter { it.isDigit() }
-        }
+        return callScreener.isNumberInAllowList(phoneNumber, allAllowed)
     }
 }
