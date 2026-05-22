@@ -3,8 +3,8 @@ package dev.canem.nexusmoderandi.service
 import android.telecom.Call
 import android.telecom.CallScreeningService
 import dagger.hilt.android.AndroidEntryPoint
-import dev.canem.nexusmoderandi.data.repository.AllowListRepository
 import dev.canem.nexusmoderandi.data.repository.RejectedCallRepository
+import dev.canem.nexusmoderandi.notification.RejectedCallNotifier
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -14,9 +14,10 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class NexusCallScreeningService : CallScreeningService() {
 
-    @Inject lateinit var allowListRepository: AllowListRepository
+    @Inject lateinit var allowListRepository: dev.canem.nexusmoderandi.data.repository.AllowListRepository
     @Inject lateinit var rejectedCallRepository: RejectedCallRepository
     @Inject lateinit var callScreener: CallScreener
+    @Inject lateinit var notifier: RejectedCallNotifier
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -44,6 +45,8 @@ class NexusCallScreeningService : CallScreeningService() {
                         .build()
                 )
                 rejectedCallRepository.logRejectedCall(phoneNumber)
+                val count = rejectedCallRepository.countLast24h()
+                notifier.updateBadge(count)
             }
         }
     }

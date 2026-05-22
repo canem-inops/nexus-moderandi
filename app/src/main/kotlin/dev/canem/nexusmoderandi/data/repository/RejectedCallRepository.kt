@@ -14,6 +14,11 @@ class RejectedCallRepository @Inject constructor(
         dao.insert(RejectedCall(phoneNumber = phoneNumber))
     }
 
+    suspend fun countLast24h(): Int {
+        val since = System.currentTimeMillis() - 24 * 60 * 60 * 1000
+        return dao.countSince(since)
+    }
+
     suspend fun clearAll() {
         dao.clearAll()
     }

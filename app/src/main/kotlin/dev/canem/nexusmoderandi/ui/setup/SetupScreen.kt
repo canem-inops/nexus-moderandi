@@ -34,9 +34,9 @@ fun SetupScreen(onRoleGranted: () -> Unit) {
         }
     }
 
-    val contactsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { /* best-effort, don't block on result */ }
+    val permissionsLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { /* best-effort, don't block on results */ }
 
     Column(
         modifier = Modifier
@@ -63,7 +63,12 @@ fun SetupScreen(onRoleGranted: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(32.dp))
         Button(onClick = {
-            contactsLauncher.launch(Manifest.permission.READ_CONTACTS)
+            permissionsLauncher.launch(
+                arrayOf(
+                    Manifest.permission.READ_CONTACTS,
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            )
             val intent = roleManager.createRequestRoleIntent(RoleManager.ROLE_CALL_SCREENING)
             roleLauncher.launch(intent)
         }) {

@@ -14,6 +14,9 @@ interface RejectedCallDao {
     @Insert
     suspend fun insert(rejectedCall: RejectedCall)
 
+    @Query("SELECT COUNT(*) FROM rejected_calls WHERE timestamp >= :since")
+    suspend fun countSince(since: Long): Int
+
     @Query("DELETE FROM rejected_calls")
     suspend fun clearAll()
 }

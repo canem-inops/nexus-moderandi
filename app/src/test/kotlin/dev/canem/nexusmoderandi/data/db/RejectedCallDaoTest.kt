@@ -61,6 +61,18 @@ class RejectedCallDaoTest {
     }
 
     @Test
+    fun `countSince returns only entries after the given timestamp`() = runTest {
+        dao.insert(RejectedCall(phoneNumber = "+15551111111", timestamp = 100))
+        dao.insert(RejectedCall(phoneNumber = "+15552222222", timestamp = 200))
+        dao.insert(RejectedCall(phoneNumber = "+15553333333", timestamp = 300))
+
+        assertEquals(2, dao.countSince(200))
+        assertEquals(1, dao.countSince(300))
+        assertEquals(0, dao.countSince(400))
+        assertEquals(3, dao.countSince(1))
+    }
+
+    @Test
     fun `clearAll removes all entries`() = runTest {
         dao.insert(RejectedCall(phoneNumber = "+15551111111"))
         dao.insert(RejectedCall(phoneNumber = "+15552222222"))
