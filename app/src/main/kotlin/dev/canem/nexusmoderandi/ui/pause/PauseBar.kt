@@ -94,7 +94,7 @@ private fun PausedContent(pauseUntil: Long, onResume: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSecondaryContainer
         )
-        FilledTonalButton(onClick = onResume) {
+        OutlinedButton(onClick = onResume) {
             Text("Reactivate now")
         }
     }
