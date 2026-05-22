@@ -2,10 +2,12 @@ package dev.canem.nexusmoderandi.ui.navigation
 
 import android.app.role.RoleManager
 import android.content.Context
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallMissed
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -13,13 +15,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dev.canem.nexusmoderandi.ui.allowlist.AllowListScreen
+import dev.canem.nexusmoderandi.ui.pause.PauseBar
+import dev.canem.nexusmoderandi.ui.pause.PauseViewModel
 import dev.canem.nexusmoderandi.ui.rejectedcalls.RejectedCallsScreen
 import dev.canem.nexusmoderandi.ui.setup.SetupScreen
 
@@ -34,30 +41,41 @@ fun NexusNavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    val pauseViewModel: PauseViewModel = hiltViewModel()
+    val pauseUntil by pauseViewModel.pauseUntil.collectAsStateWithLifecycle()
+
     Scaffold(
         bottomBar = {
             if (hasRole && currentRoute != "setup") {
-                NavigationBar {
-                    NavigationBarItem(
-                        selected = currentRoute == "allowlist",
-                        onClick = {
-                            navController.navigate("allowlist") {
-                                popUpTo("allowlist") { inclusive = true }
-                            }
-                        },
-                        icon = { Icon(Icons.Default.Shield, contentDescription = null) },
-                        label = { Text("Allow List") }
+                Column {
+                    HorizontalDivider()
+                    PauseBar(
+                        pauseUntil = pauseUntil,
+                        onPause = pauseViewModel::pause,
+                        onResume = pauseViewModel::resume
                     )
-                    NavigationBarItem(
-                        selected = currentRoute == "rejected",
-                        onClick = {
-                            navController.navigate("rejected") {
-                                popUpTo("allowlist")
-                            }
-                        },
-                        icon = { Icon(Icons.AutoMirrored.Filled.CallMissed, contentDescription = null) },
-                        label = { Text("Rejected") }
-                    )
+                    NavigationBar {
+                        NavigationBarItem(
+                            selected = currentRoute == "allowlist",
+                            onClick = {
+                                navController.navigate("allowlist") {
+                                    popUpTo("allowlist") { inclusive = true }
+                                }
+                            },
+                            icon = { Icon(Icons.Default.Shield, contentDescription = null) },
+                            label = { Text("Allow List") }
+                        )
+                        NavigationBarItem(
+                            selected = currentRoute == "rejected",
+                            onClick = {
+                                navController.navigate("rejected") {
+                                    popUpTo("allowlist")
+                                }
+                            },
+                            icon = { Icon(Icons.AutoMirrored.Filled.CallMissed, contentDescription = null) },
+                            label = { Text("Rejected") }
+                        )
+                    }
                 }
             }
         }
