@@ -1,12 +1,14 @@
 package dev.canem.nexusmoderandi.service
 
 import dev.canem.nexusmoderandi.data.entity.AllowedNumber
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+@RunWith(RobolectricTestRunner::class)
 class CallScreenerTest {
 
     private lateinit var screener: CallScreener
@@ -16,84 +18,66 @@ class CallScreenerTest {
         screener = CallScreener()
     }
 
-    // -- normalizeNumber tests --
-
     @Test
-    fun `normalizeNumber strips formatting from local number`() {
-        assertEquals("5551234567", screener.normalizeNumber("(555) 123-4567"))
+    fun `exact match`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "+5511912345678"))
+        assertTrue(screener.isNumberInAllowList("+5511912345678", allowList))
     }
 
     @Test
-    fun `normalizeNumber preserves leading plus`() {
-        assertEquals("+15551234567", screener.normalizeNumber("+1 (555) 123-4567"))
+    fun `international format matches national format`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "+5511912345678"))
+        assertTrue(screener.isNumberInAllowList("11912345678", allowList))
     }
 
     @Test
-    fun `normalizeNumber handles plain digits`() {
-        assertEquals("5551234567", screener.normalizeNumber("5551234567"))
+    fun `national format matches international format`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "11912345678"))
+        assertTrue(screener.isNumberInAllowList("+5511912345678", allowList))
     }
 
     @Test
-    fun `normalizeNumber handles international format with plus`() {
-        assertEquals("+442071234567", screener.normalizeNumber("+44 207 123 4567"))
+    fun `local number matches full number`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "912345678"))
+        assertTrue(screener.isNumberInAllowList("+5511912345678", allowList))
     }
 
     @Test
-    fun `normalizeNumber handles empty string`() {
-        assertEquals("", screener.normalizeNumber(""))
+    fun `full number matches local number`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "+5511912345678"))
+        assertTrue(screener.isNumberInAllowList("912345678", allowList))
     }
 
     @Test
-    fun `normalizeNumber handles dashes and dots`() {
-        assertEquals("5551234567", screener.normalizeNumber("555.123.4567"))
-    }
-
-    // -- isNumberInAllowList tests --
-
-    @Test
-    fun `isNumberInAllowList returns true for exact match`() {
-        val allowList = listOf(AllowedNumber(phoneNumber = "+15551234567"))
-        assertTrue(screener.isNumberInAllowList("+15551234567", allowList))
+    fun `formatted number matches raw digits`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "(11) 91234-5678"))
+        assertTrue(screener.isNumberInAllowList("+5511912345678", allowList))
     }
 
     @Test
-    fun `isNumberInAllowList matches despite formatting differences`() {
-        val allowList = listOf(AllowedNumber(phoneNumber = "(555) 123-4567"))
-        assertTrue(screener.isNumberInAllowList("5551234567", allowList))
+    fun `different numbers do not match`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "+5511912345678"))
+        assertFalse(screener.isNumberInAllowList("+5511999999999", allowList))
     }
 
     @Test
-    fun `isNumberInAllowList matches international with different formatting`() {
-        val allowList = listOf(AllowedNumber(phoneNumber = "+1-555-123-4567"))
-        assertTrue(screener.isNumberInAllowList("+1 (555) 123-4567", allowList))
+    fun `empty allow list returns false`() {
+        assertFalse(screener.isNumberInAllowList("+5511912345678", emptyList()))
     }
 
     @Test
-    fun `isNumberInAllowList returns false for non-matching number`() {
-        val allowList = listOf(AllowedNumber(phoneNumber = "+15551234567"))
-        assertFalse(screener.isNumberInAllowList("+15559999999", allowList))
-    }
-
-    @Test
-    fun `isNumberInAllowList returns false for empty list`() {
-        assertFalse(screener.isNumberInAllowList("+15551234567", emptyList()))
-    }
-
-    @Test
-    fun `isNumberInAllowList distinguishes numbers with and without country code`() {
-        val allowList = listOf(AllowedNumber(phoneNumber = "+15551234567"))
-        // "5551234567" normalizes to "5551234567", "+15551234567" normalizes to "+15551234567"
-        // These are different — the plus prefix matters
-        assertFalse(screener.isNumberInAllowList("5551234567", allowList))
-    }
-
-    @Test
-    fun `isNumberInAllowList finds match among multiple entries`() {
+    fun `finds match among multiple entries`() {
         val allowList = listOf(
-            AllowedNumber(phoneNumber = "+15551111111"),
-            AllowedNumber(phoneNumber = "+15552222222"),
-            AllowedNumber(phoneNumber = "+15553333333")
+            AllowedNumber(phoneNumber = "+5511911111111"),
+            AllowedNumber(phoneNumber = "+5511922222222"),
+            AllowedNumber(phoneNumber = "+5511933333333")
         )
-        assertTrue(screener.isNumberInAllowList("+15552222222", allowList))
+        assertTrue(screener.isNumberInAllowList("922222222", allowList))
+    }
+
+    @Test
+    fun `US number formats match`() {
+        val allowList = listOf(AllowedNumber(phoneNumber = "+1 (555) 123-4567"))
+        assertTrue(screener.isNumberInAllowList("5551234567", allowList))
     }
 }
